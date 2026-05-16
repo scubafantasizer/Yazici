@@ -68,9 +68,3 @@ The system will initialize at `http://127.0.0.1:3147`. The console will display 
 ## License
 
 **GNU General Public License v3.0**.
-
-If you have hardware above T4 scale — the code is GPL 3.0. Go test it.
-
-A wall is built from bricks, but a blueprint is realized by the printer. We chose the name **Yazıcı** to signify the transition from manual "bricklaying" to automated "printing." The goal is a world where high-quality, secure code is as easy to produce as a sheet of paper.
-
-Go forth and print. ✦
