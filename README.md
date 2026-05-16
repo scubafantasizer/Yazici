@@ -1,70 +1,119 @@
-# Yazıcı ✦ The Autonomous Production Engine
+b# Yazıcı — The Autonomous Logic Printer
 
-*"Development is not a construction; it is a print. The logic is the ink, the AI is the nozzle, and the codebase is the paper. We do not build code—we print it."*
+A browser-based AI IDE that treats software development as a fluid expression of logic, not a construction site.
 
-**License**: GNU General Public License v3.0
-**Architecture**: Multi-Model Routing & Contextual Serialization
-**Runtime**: Node.js 26+ (V8-Optimized)
-**Project Status**: v3.0.0 Stable
+**License:** GPL v3 | **Version:** 3.0.0 | **Stack:** TypeScript, Express, SQLite
 
 ---
 
-## What Is Yazıcı?
+> [!IMPORTANT]
+> **Experimental Autonomous Tooling**
+> Yazıcı is a high-performance development engine designed to interact directly with your local workspace. It executes file operations and terminal commands based on AI intent. Use with caution in production environments.
 
-**Yazıcı** (Turkish: *Printer*) is an autonomous development engine designed to bridge the gap between abstract human intent and concrete executable code. It treats software development as a continuous, linear production process. By abstracting away the friction of manual environment setup, dependency resolution, and model selection, Yazıcı allows developers to maintain a "flow state" that is effectively infinite.
+## Why "Yazıcı"?
 
-Instead of navigating the codebase manually, the Yazıcı engine analyzes your intent at the architectural level and "prints" the necessary modifications across files simultaneously. The route is the code; the code is the output.
+**Yazıcı** (Turkish for *Printer*) represents a fundamental shift in how we perceive the act of creation. 
 
-## Architecture: The Production Line
+In traditional paradigms, we "build" software—a metaphor of bricks, mortar, and manual labor. Yazıcı rejects this. Our philosophy is rooted in a different truth:
 
-Yazıcı operates on a "Production Line" model where every component is a stage in the printing process.
+**Development is not a construction; it is a print.**
 
-### Components
+- **The Logic is the Ink**: Your intent and architectural vision are the fluid substance.
+- **The AI is the Nozzle**: The large language model is the high-precision instrument that directs the flow.
+- **The Codebase is the Paper**: The local file system is the medium upon which the logic is materialized.
 
-| Component | Role |
-| :--- | :--- |
-| **Intake (UI)** | A high-performance Monaco-based interface for precise intent capturing. |
-| **Duct (Router)** | Patented multi-model routing that selects the optimal LLM tier (Gemini, Claude, OpenAI) based on task complexity. |
-| **Ink (Context)** | Advanced contextual serialization that feeds relevant code snippets to the AI without overwhelming token limits. |
-| **Nozzle (Engine)** | The core execution layer that applies diffs onto the local filesystem using transactionally safe operations. |
-| **Bed (Persistence)** | Optimized SQLite storage via `better-sqlite3` for state, history, and secret management. |
+We do not build code—we print it. Yazıcı is the mechanism that allows logic to flow from thought to disk with zero friction.
 
-## The Philosophy of "Infinite Credit"
+## What is Yazıcı?
 
-The primary bottleneck in modern AI-driven development is not model intelligence, but the cost and availability of model "credits." Yazıcı employs a structural optimization strategy:
+Yazıcı is an autonomous development engine that bridges the gap between high-level reasoning and low-level execution. It is a browser-based IDE that doesn't just suggest code—it performs it. 
 
-1. **Intelligent Tiering**: By routing simple refactors to lower-latency, lower-cost models and reserving "Advanced" tiers for architectural changes, Yazıcı maximizes the "credit-to-output" ratio.
-2. **Context Compression**: Only the most vital "bricks" of the codebase are sent to the AI, reducing token waste and ensuring high-quality responses even in large projects.
-3. **Fluid Workflows**: By automating the "boring" parts (like dependency installs and port clearing), Yazıcı ensures that the developer's time—the most expensive credit—is never wasted.
+Equipped with a custom **Skills Protocol**, Yazıcı can read, write, delete files, and execute terminal commands across your local workspace, orchestrated by a sophisticated multi-model routing system.
 
-## Technical Specification: PBNM-Flow Compatibility
+## Architecture
 
-While Yazıcı currently operates as a high-level development engine, its architecture is designed for future compatibility with Pointer-Based Neural Mapping (PBNM) frameworks. 
+```mermaid
+graph TD
+    User([User Intent]) --> Router[Tiered Intent Classifier]
+    Router -->|basic / inter / adv| Dispatcher{Model Dispatcher}
+    
+    Dispatcher --> Claude[Claude 3.5/4.5]
+    Dispatcher --> GPT[GPT-4o/mini]
+    Dispatcher --> Gemini[Gemini 2.0/2.5]
+    Dispatcher --> DeepSeek[DeepSeek V3/R1]
+    
+    Claude & GPT & Gemini & DeepSeek --> Protocol[AI Skills Protocol]
+    
+    Protocol --> FileOps[File operations: Read/Write/Delete]
+    Protocol --> Exec[Terminal Execution: Bash/Cmd]
+    
+    FileOps & Exec --> Workspace[(Local Workspace)]
+```
 
-- **Traceable Code Printing**: Every modification is logged as an explicit sequence of operations.
-- **Modular Refinement**: Components can be swapped or patched without halting the server, enabling "Hot-Printing" of new features.
+## Core Features
 
-## Usage
+### 1. Multi-Model Intelligence
+Yazıcı doesn't lock you into a single provider. It intelligently routes requests across a pool of state-of-the-art models based on task complexity.
 
-### Requirements
-- Node.js 26+
-- C++20 Compiler (for native module optimization)
-- SQLite3
+| Provider | Basic Tier | Intermediate Tier | Advanced Tier |
+| :--- | :--- | :--- | :--- |
+| **Claude** | Claude Haiku | Claude Sonnet | Claude Opus |
+| **Gemini** | Gemini Flash | Gemini Flash | Gemini Pro |
+| **OpenAI** | GPT-4o-mini | GPT-4o | GPT-4o |
+| **DeepSeek** | DeepSeek Chat | DeepSeek Chat | DeepSeek Reasoner |
+
+### 2. Tiered Intent Classification
+To optimize for both speed and cost, Yazıcı classifies every user message before processing:
+- **Basic**: Trivial edits, greetings, or formatting.
+- **Inter**: Feature implementation, code explanation, and testing.
+- **Adv**: Complex architecture, deep debugging, and security audits.
+
+### 3. AI Skills Protocol
+Yazıcı communicates with your system through a structured protocol defined in `SKILLS.md`. This allows the AI to:
+- Create and overwrite files with surgical precision.
+- Delete obsolete or redundant assets.
+- Execute build scripts, install dependencies, and run tests directly.
+
+## File Structure
+
+```text
+GateAi/
+├── src/
+│   ├── core/           # Routing and Intent Logic
+│   ├── providers/      # LLM API Adapters (Claude, Gemini, etc.)
+│   ├── routes/         # Express API Endpoints
+│   ├── services/       # Key Management and Database
+│   └── server.ts       # Entry Point
+├── public/             # Browser IDE Frontend
+├── SKILLS.md           # AI Interaction Protocol
+├── yazici.sh / .bat    # Quick Launch Scripts
+└── package.json        # Dependencies and Metadata
+```
+
+## Quick Start
+
+### Prerequisites
+- Node.js (v20+)
+- API Keys for at least one provider (Claude, OpenAI, Gemini, or DeepSeek)
 
 ### Installation
-```bash
-# Ensure C++20 standard is forced during native compilation
-CXXFLAGS="-std=c++20" npm install
-```
+1. Clone the repository to your local machine.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+4. Open your browser and navigate to `http://127.0.0.1:3147`.
 
-### Execution
-```bash
-# Start the production engine
-npm run dev
-```
-
-The system will initialize at `http://127.0.0.1:3147`. The console will display the Yazıcı banner upon successful boot.
+### Configuration
+API keys are managed via the built-in Settings menu in the IDE or stored in the local SQLite database.
 
 ## License
 
-**GNU General Public License v3.0**.
+Copyright (C) 2026 Yazıcı Contributors.
+
+This program is free software: you can redistribute it and/or modify it under the terms of the **GNU General Public License v3.0**. See `LICENSE` for details.
+
