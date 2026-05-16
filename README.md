@@ -1,4 +1,4 @@
-b# Yazıcı — The Autonomous Logic Printer
+# Yazıcı — The Autonomous Logic Printer
 
 A browser-based AI IDE that treats software development as a fluid expression of logic, not a construction site.
 
