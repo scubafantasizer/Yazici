@@ -3,29 +3,16 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-const OLD_GATEAI_DIR = path.join(os.homedir(), '.gateai');
-const KEY_DIR = path.join(os.homedir(), '.yazici');
+// ─── Storage ──────────────────────────────────────────────────────────────────
 
-// Migration check
-if (!fs.existsSync(KEY_DIR) && fs.existsSync(OLD_GATEAI_DIR)) {
-  try {
-    fs.renameSync(OLD_GATEAI_DIR, KEY_DIR);
-    console.log(`\n  ✦ Migrated config from ${OLD_GATEAI_DIR} to ${KEY_DIR}\n`);
-  } catch (err) {
-    console.error(`  ⚠ Failed to migrate config: ${(err as Error).message}`);
-  }
-}
-
-if (!fs.existsSync(KEY_DIR)) fs.mkdirSync(KEY_DIR, { recursive: true });
-
-const KEY_FILE = path.join(KEY_DIR, 'keys.json');
+const KEY_FILE = path.join(os.homedir(), '.gateai', 'keys.json');
 
 type KeyMap = Record<string, string[]>;
 
 // ─── Encryption ───────────────────────────────────────────────────────────────
 
 function deriveEncKey(): Buffer {
-  const seed = os.hostname() + os.userInfo().username + 'yazici-v3';
+  const seed = os.hostname() + os.userInfo().username + 'gateai-v3';
   return crypto.createHash('sha256').update(seed).digest();
 }
 

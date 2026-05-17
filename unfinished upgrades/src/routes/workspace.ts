@@ -1,15 +1,14 @@
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import fs   from 'fs';
-import { execSync } from 'child_process';
 import path from 'path';
 import os   from 'os';
 
 // ─── Workspace (local filesystem) ─────────────────────────────────────────────
-// Preserves the original Yazıcı behavior: a single local workspace directory.
+// Preserves the original GateAi behavior: a single local workspace directory.
 
 const router = Router();
 
-const WORKSPACE_ROOT = path.join(os.homedir(), 'Yazıcı-Workspace');
+export const WORKSPACE_ROOT = path.join(os.homedir(), 'GateAI-Workspace');
 
 if (!fs.existsSync(WORKSPACE_ROOT)) {
   fs.mkdirSync(WORKSPACE_ROOT, { recursive: true });
@@ -17,7 +16,7 @@ if (!fs.existsSync(WORKSPACE_ROOT)) {
     path.join(WORKSPACE_ROOT, 'hello.html'),
     `<!DOCTYPE html>
 <html>
-<head><title>Hello from Yazıcı</title>
+<head><title>Hello from GateAI</title>
 <style>
   body { font-family: sans-serif; padding: 40px; background: #1a1a2e; color: #eee; }
   h1   { color: #7c6af7; }
@@ -25,7 +24,7 @@ if (!fs.existsSync(WORKSPACE_ROOT)) {
 </style>
 </head>
 <body>
-  <h1>Hello from Yazıcı</h1>
+  <h1>Hello from GateAI</h1>
   <p>Edit this file or create new ones using the file explorer on the left.</p>
   <p>Ask the AI assistant on the right for help building anything.</p>
 </body>
@@ -71,7 +70,7 @@ function buildTree(dir: string, base = ''): TreeEntry[] {
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-router.get('/api/files', (_req, res) => {
+router.get('/api/files', (_req: Request, res: Response) => {
   try {
     res.json({ tree: buildTree(WORKSPACE_ROOT), root: WORKSPACE_ROOT });
   } catch (err: unknown) {
@@ -79,7 +78,7 @@ router.get('/api/files', (_req, res) => {
   }
 });
 
-router.get('/api/files/content', (req, res) => {
+router.get('/api/files/content', (req: Request, res: Response) => {
   try {
     const abs     = safePath(req.query.path as string);
     const content = fs.readFileSync(abs, 'utf8');
@@ -89,7 +88,7 @@ router.get('/api/files/content', (req, res) => {
   }
 });
 
-router.post('/api/files/content', (req, res) => {
+router.post('/api/files/content', (req: Request, res: Response) => {
   try {
     const { path: rel, content } = req.body as { path: string; content: string };
     const abs = safePath(rel);
@@ -101,7 +100,7 @@ router.post('/api/files/content', (req, res) => {
   }
 });
 
-router.post('/api/files/create', (req, res) => {
+router.post('/api/files/create', (req: Request, res: Response) => {
   try {
     const { path: rel, type } = req.body as { path: string; type: 'file' | 'dir' };
     const abs = safePath(rel);
@@ -117,7 +116,7 @@ router.post('/api/files/create', (req, res) => {
   }
 });
 
-router.post('/api/files/rename', (req, res) => {
+router.post('/api/files/rename', (req: Request, res: Response) => {
   try {
     const { from, to } = req.body as { from: string; to: string };
     fs.renameSync(safePath(from), safePath(to));
@@ -127,7 +126,7 @@ router.post('/api/files/rename', (req, res) => {
   }
 });
 
-router.delete('/api/files', (req, res) => {
+router.delete('/api/files', (req: Request, res: Response) => {
   try {
     const abs = safePath(req.query.path as string);
     if (fs.statSync(abs).isDirectory()) {
@@ -141,33 +140,30 @@ router.delete('/api/files', (req, res) => {
   }
 });
 
-router.post('/api/exec', (req, res) => {
+import { searchFiles } from '../utils/search.js';
+
+router.get('/api/workspace/search', async (req: Request, res: Response) => {
   try {
-    const { command } = req.body as { command: string };
-    if (!command) { res.status(400).json({ error: 'Command required' }); return; }
-    
-    // basic sandboxing/safety
-    const dangerous = ['rm -rf /', 'mkfs', 'dd if=', ':(){ :|:& };:', 'chmod -R 777 /', 'chown', 'shutdown', 'reboot'];
-    if (dangerous.some(d => command.includes(d))) {
-      res.status(403).json({ error: 'Destructive command blocked for safety.' });
+    const query = req.query.q as string;
+    if (!query) {
+      res.status(400).json({ error: 'Search query (q) is required' });
       return;
     }
-
-    // Execute command strictly within WORKSPACE_ROOT
-    const output = execSync(command, {
-      cwd: WORKSPACE_ROOT,
-      encoding: 'utf8',
-      shell: process.platform === 'win32' ? 'cmd' : '/bin/sh',
-      timeout: 30_000,
-      env: { ...process.env, PATH: process.env.PATH } // ensure PATH is inherited
-    });
-    res.json({ output });
+    
+    // We only search within the Workspace Root
+    const results = await searchFiles(query, WORKSPACE_ROOT);
+    
+    // Map absolute paths back to relative paths for the client
+    const mapped = results.map(r => ({
+      ...r,
+      filePath: r.filePath.startsWith(WORKSPACE_ROOT) 
+        ? r.filePath.substring(WORKSPACE_ROOT.length + 1) // +1 for slash
+        : r.filePath
+    }));
+    
+    res.json(mapped);
   } catch (err: unknown) {
-    const e = err as { stdout?: string; stderr?: string; message: string };
-    res.status(500).json({ 
-      error: e.message, 
-      output: (e.stdout || '') + (e.stderr || '') 
-    });
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 

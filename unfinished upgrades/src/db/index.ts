@@ -5,10 +5,10 @@ import fs from 'fs';
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
-const YAZICI_DIR = path.join(os.homedir(), '.yazici');
-if (!fs.existsSync(YAZICI_DIR)) fs.mkdirSync(YAZICI_DIR, { recursive: true });
+const GATEAI_DIR = path.join(os.homedir(), '.gateai');
+if (!fs.existsSync(GATEAI_DIR)) fs.mkdirSync(GATEAI_DIR, { recursive: true });
 
-export const db = new Database(path.join(YAZICI_DIR, 'yazici.db'));
+export const db = new Database(path.join(GATEAI_DIR, 'gateai.db'));
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 

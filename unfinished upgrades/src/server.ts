@@ -29,20 +29,7 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
-// ─── Port Clearing ────────────────────────────────────────────────────────────
-
-function clearPort(port: number): void {
-  try {
-    const cmd = process.platform === 'win32'
-      ? `for /f "tokens=5" %a in ('netstat -aon ^| findstr :${port}') do taskkill /f /pid %a`
-      : `fuser -k ${port}/tcp`;
-    execSync(cmd, { stdio: 'ignore' });
-  } catch { /* port likely already clear */ }
-}
-
 // ─── Start ────────────────────────────────────────────────────────────────────
-
-clearPort(PORT);
 
 app.listen(PORT, HOST, () => {
   const url = `http://${HOST}:${PORT}`;

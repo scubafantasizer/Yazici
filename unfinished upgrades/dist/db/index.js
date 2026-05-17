@@ -1,20 +1,24 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import os from 'os';
-import fs from 'fs';
-
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.db = void 0;
+exports.touchProject = touchProject;
+exports.contentSize = contentSize;
+const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
+const path_1 = __importDefault(require("path"));
+const os_1 = __importDefault(require("os"));
+const fs_1 = __importDefault(require("fs"));
 // ─── Setup ────────────────────────────────────────────────────────────────────
-
-const YAZICI_DIR = path.join(os.homedir(), '.yazici');
-if (!fs.existsSync(YAZICI_DIR)) fs.mkdirSync(YAZICI_DIR, { recursive: true });
-
-export const db = new Database(path.join(YAZICI_DIR, 'yazici.db'));
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
+const GATEAI_DIR = path_1.default.join(os_1.default.homedir(), '.gateai');
+if (!fs_1.default.existsSync(GATEAI_DIR))
+    fs_1.default.mkdirSync(GATEAI_DIR, { recursive: true });
+exports.db = new better_sqlite3_1.default(path_1.default.join(GATEAI_DIR, 'gateai.db'));
+exports.db.pragma('journal_mode = WAL');
+exports.db.pragma('foreign_keys = ON');
 // ─── Schema ───────────────────────────────────────────────────────────────────
-
-db.exec(`
+exports.db.exec(`
   CREATE TABLE IF NOT EXISTS projects (
     id          TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(8)))),
     name        TEXT NOT NULL,
@@ -75,15 +79,12 @@ db.exec(`
     result      TEXT
   );
 `);
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
 /** Touch the updated_at field of a project. */
-export function touchProject(id: string): void {
-  db.prepare(`UPDATE projects SET updated_at = datetime('now') WHERE id = ?`).run(id);
+function touchProject(id) {
+    exports.db.prepare(`UPDATE projects SET updated_at = datetime('now') WHERE id = ?`).run(id);
 }
-
 /** Compute file size from content length. */
-export function contentSize(content: string): number {
-  return Buffer.byteLength(content, 'utf8');
+function contentSize(content) {
+    return Buffer.byteLength(content, 'utf8');
 }

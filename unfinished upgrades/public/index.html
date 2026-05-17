@@ -98,15 +98,8 @@
   #preview-frame { flex: 1; border: none; background: #fff; }
 
   /* ── Chat panel ───────────────────────────────────────────── */
-  #chat-panel { width: var(--chat-width); min-width: 200px; border-left: 1px solid var(--border); background: var(--bg1); display: flex; flex-direction: column; flex-shrink: 0; min-height: 0; overflow: hidden; }
-  #chat-messages { flex: 1; overflow-y: overlay; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0; scroll-behavior: auto; }
-  #chat-input-area { border-top: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; background: var(--bg1); }
-  
-  /* ── Resizers ──────────────────────────────────────────────── */
-  .resizer { background: transparent; transition: background .2s; z-index: 10; position: relative; }
-  .resizer:hover, .resizer.dragging { background: var(--accent); opacity: 0.3; }
-  .resizer-h { width: 4px; cursor: col-resize; margin: 0 -2px; }
-  .resizer-v { height: 4px; cursor: row-resize; margin: -2px 0; }
+  #chat-panel { width: var(--chat-width); min-width: 280px; border-left: 1px solid var(--border); background: var(--bg1); display: flex; flex-direction: column; flex-shrink: 0; }
+  #chat-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
   .msg { display: flex; flex-direction: column; gap: 4px; }
   .msg-header { font-size: 10.5px; color: var(--text3); display: flex; align-items: center; gap: 6px; }
   .msg-header .badge { font-size: 9px; padding: 1px 5px; border-radius: 10px; background: var(--bg3); color: var(--text2); }
@@ -189,31 +182,6 @@
   .status-dot { width: 7px; height: 7px; border-radius: 50%; }
   .status-dot.ok { background: var(--green); }
   .status-dot.none { background: var(--text3); }
-  
-  /* ── Skills ────────────────────────────────────────────────── */
-  .skill-block { background: var(--bg0); border: 1px solid var(--border); border-radius: 8px; margin: 8px 0; overflow: hidden; }
-  .skill-header { background: var(--bg2); padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
-  .skill-header span { font-family: monospace; font-size: 11px; color: var(--text2); }
-  .skill-btn { background: var(--accent); border: none; color: #fff; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; }
-  .skill-btn:hover { background: var(--accent2); }
-  .skill-btn.danger { background: var(--red); }
-  .skill-btn.danger:hover { background: #e67e97; }
-  .skill-btn.dim { background: var(--bg2); color: var(--text3); border: 1px solid var(--border); }
-  .skill-btn.dim:hover { background: var(--bg1); color: var(--text2); }
-  .skill-btn:disabled { opacity: 0.5; cursor: default; }
-
-  /* ── Switch ────────────────────────────────────────────────── */
-  .switch-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-  .switch { position: relative; display: inline-block; width: 28px; height: 16px; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg3); transition: .2s; border-radius: 16px; }
-  .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: white; transition: .2s; border-radius: 50%; }
-  input:checked + .slider { background-color: var(--accent); }
-  input:checked + .slider:before { transform: translateX(12px); }
-  .switch-label { font-size: 11px; color: var(--text3); }
-
-  .apply-all-btn { width: 100%; margin-top: 12px; padding: 6px; background: var(--bg2); border: 1px dashed var(--accent); color: var(--accent); border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; }
-  .apply-all-btn:hover { background: var(--bg1); border-style: solid; }
 </style>
 </head>
 <body>
@@ -231,15 +199,13 @@
     </div>
     <div class="spacer"></div>
     <div id="workspace-label">Workspace: <span id="ws-path-label">~/Yazıcı-Workspace</span></div>
-    <button class="icon-btn" onclick="togglePanel('sidebar')" title="Toggle Sidebar">📁</button>
-    <button class="icon-btn" onclick="togglePanel('chat-panel')" title="Toggle Chat">💬</button>
     <button class="icon-btn" onclick="openSettings()" title="Settings">⚙</button>
   </div>
 
   <!-- Main -->
   <div id="main">
     <!-- Sidebar -->
-    <div id="sidebar" style="width: var(--sidebar-width)">
+    <div id="sidebar">
       <div class="panel-header">
         Files
         <div class="hspace"></div>
@@ -249,8 +215,6 @@
       </div>
       <div id="file-tree"></div>
     </div>
-
-    <div class="resizer resizer-h" id="resizer-sidebar"></div>
 
     <!-- Editor + Bottom -->
     <div id="editor-area">
@@ -263,15 +227,14 @@
         </div>
         <div id="monaco-container" style="display:none;flex:1;"></div>
       </div>
-
-      <div class="resizer resizer-v" id="resizer-bottom"></div>
-
-      <div id="bottom-area" style="height: var(--bottom-height)">
+      <div id="bottom-area">
         <div style="display:flex;flex-direction:column;flex:1;min-width:0;">
           <div class="panel-header" style="border-top:none;">
-            <span class="btab active" id="btab-terminal">Terminal</span>
+            <span class="btab active" id="btab-terminal" onclick="switchBottomTab('terminal')">Terminal</span>
+            <span class="btab" id="btab-preview" onclick="switchBottomTab('preview')">Preview</span>
             <div class="hspace"></div>
             <button class="icon-btn" onclick="clearTerminal()" title="Clear">✕</button>
+            <button class="icon-btn" id="preview-open-btn" onclick="openPreviewExternal()" title="Open in browser" style="display:none">↗</button>
           </div>
           <div id="terminal-panel" style="display:flex">
             <div class="bottom-pane" id="terminal-output">
@@ -280,14 +243,15 @@
               <span class="t-dim">─────────────────────────────</span><br>
             </div>
           </div>
+          <div id="preview-panel" style="display:none;flex:1;">
+            <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="resizer resizer-h" id="resizer-chat"></div>
-
     <!-- Chat Panel -->
-    <div id="chat-panel" style="width: var(--chat-width)">
+    <div id="chat-panel">
       <div class="panel-header">
         AI Assistant
         <div class="hspace"></div>
@@ -309,13 +273,6 @@
           <button class="provider-btn" data-p="claude" onclick="setProvider(this)">Claude</button>
           <button class="provider-btn" data-p="openai" onclick="setProvider(this)">OpenAI</button>
           <button class="provider-btn" data-p="deepseek" onclick="setProvider(this)">DeepSeek</button>
-        </div>
-        <div class="switch-row">
-          <label class="switch">
-            <input type="checkbox" id="auto-apply-toggle">
-            <span class="slider"></span>
-          </label>
-          <span class="switch-label">Auto-apply skills</span>
         </div>
         <div id="send-row">
           <textarea id="chat-input" placeholder="Ask anything... (/basic /inter /adv)" rows="2"></textarea>
@@ -380,7 +337,7 @@ let bottomTab = 'terminal';
 require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
 
 require(['vs/editor/editor.main'], () => {
-  monaco.editor.defineTheme('yazici', {
+  monaco.editor.defineTheme('gateai', {
     base: 'vs-dark',
     inherit: true,
     rules: [
@@ -403,7 +360,7 @@ require(['vs/editor/editor.main'], () => {
   });
 
   editor = monaco.editor.create(document.getElementById('monaco-container'), {
-    theme: 'yazici',
+    theme: 'gateai',
     language: 'plaintext',
     fontSize: 13,
     fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace",
@@ -437,7 +394,7 @@ async function loadTree() {
   const res = await fetch('/api/files');
   const data = await res.json();
   treeData = data.tree;
-  document.getElementById('ws-path-label').textContent = data.root || '~/Yazıcı-Workspace';
+  document.getElementById('ws-path-label').textContent = data.root || '~/GateAI-Workspace';
   renderTree(treeData, document.getElementById('file-tree'), 0);
 }
 
@@ -661,67 +618,33 @@ document.getElementById('ctx-delete').addEventListener('click', () => {
 
 document.addEventListener('click', () => document.getElementById('ctx-menu').classList.remove('open'));
 
-// ─── Resizers ───────────────────────────────────────────────────────────────
-function setupResizers() {
-  const sidebar = document.getElementById('sidebar');
-  const resizerSidebar = document.getElementById('resizer-sidebar');
-  const bottom = document.getElementById('bottom-area');
-  const resizerBottom = document.getElementById('resizer-bottom');
-  const chat = document.getElementById('chat-panel');
-  const resizerChat = document.getElementById('resizer-chat');
-
-  function initResize(e, type, el, resizer) {
-    e.preventDefault();
-    resizer.classList.add('dragging');
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startW = el.offsetWidth;
-    const startH = el.offsetHeight;
-
-    function onMouseMove(e) {
-      if (type === 'h-left') {
-        const w = startW + (e.clientX - startX);
-        if (w > 100 && w < 600) {
-          el.style.width = w + 'px';
-          document.documentElement.style.setProperty('--sidebar-width', w + 'px');
-        }
-      } else if (type === 'h-right') {
-        const w = startW - (e.clientX - startX);
-        if (w > 150 && w < 800) {
-          el.style.width = w + 'px';
-          document.documentElement.style.setProperty('--chat-width', w + 'px');
-        }
-      } else if (type === 'v') {
-        const h = startH - (e.clientY - startY);
-        if (h > 50 && h < 600) {
-          el.style.height = h + 'px';
-          document.documentElement.style.setProperty('--bottom-height', h + 'px');
-        }
-      }
-      if (editor) editor.layout();
-    }
-
-    function onMouseUp() {
-      resizer.classList.remove('dragging');
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    }
-
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  }
-
-  resizerSidebar.addEventListener('mousedown', e => initResize(e, 'h-left', sidebar, resizerSidebar));
-  resizerChat.addEventListener('mousedown', e => initResize(e, 'h-right', chat, resizerChat));
-  resizerBottom.addEventListener('mousedown', e => initResize(e, 'v', bottom, resizerBottom));
+// ─── Bottom panel ───────────────────────────────────────────────────────────
+function switchBottomTab(tab) {
+  bottomTab = tab;
+  document.getElementById('terminal-panel').style.display = tab === 'terminal' ? 'flex' : 'none';
+  document.getElementById('preview-panel').style.display = tab === 'preview' ? 'flex' : 'none';
+  document.getElementById('btab-terminal').classList.toggle('active', tab === 'terminal');
+  document.getElementById('btab-preview').classList.toggle('active', tab === 'preview');
+  document.getElementById('preview-open-btn').style.display = tab === 'preview' ? '' : 'none';
+  if (tab === 'preview') refreshPreview();
 }
 
-// Call on load
-window.addEventListener('DOMContentLoaded', setupResizers);
+function refreshPreview() {
+  const frame = document.getElementById('preview-frame');
+  if (currentFile?.endsWith('.html') && editor) {
+    const content = editor.getValue();
+    frame.srcdoc = content;
+  } else if (currentFile) {
+    frame.srcdoc = `<html><body style="font-family:sans-serif;padding:20px;background:#1a1b27;color:#cdd6f4"><p>Open an HTML file to preview it here.</p></body></html>`;
+  }
+}
 
-// ─── Bottom panel ───────────────────────────────────────────────────────────
-function clearTerminal() {
-  document.getElementById('terminal-output').innerHTML = '';
+function openPreviewExternal() {
+  if (currentFile?.endsWith('.html')) {
+    const content = editor?.getValue() || '';
+    const blob = new Blob([content], { type: 'text/html' });
+    window.open(URL.createObjectURL(blob), '_blank');
+  }
 }
 
 function termLog(msg, cls = '') {
@@ -769,22 +692,6 @@ function removeContext(path) {
   renderContextChips();
 }
 
-// ─── Panel Toggles ────────────────────────────────────────────────────────
-function togglePanel(id) {
-  const el = document.getElementById(id);
-  const isSidebar = id === 'sidebar';
-  const resizer = isSidebar ? document.getElementById('resizer-sidebar') : document.getElementById('resizer-chat');
-  
-  if (el.style.display === 'none') {
-    el.style.display = 'flex';
-    if (resizer) resizer.style.display = 'block';
-  } else {
-    el.style.display = 'none';
-    if (resizer) resizer.style.display = 'none';
-  }
-  if (editor) editor.layout();
-}
-
 async function sendChat() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
@@ -809,7 +716,6 @@ async function sendChat() {
 
   let routeInfo = null;
   let full = '';
-  let appliedSkillIndices = new Set();
 
   try {
     const res = await fetch('/api/chat/stream', {
@@ -834,15 +740,7 @@ async function sendChat() {
         try {
           const ev = JSON.parse(line.slice(6));
           if (ev.type === 'route') { routeInfo = ev; updateMsgBadge(thinkingEl, ev); }
-          if (ev.type === 'chunk') { 
-            full += ev.text; 
-            updateMsgContent(thinkingEl, full); 
-            
-            // Real-time auto-apply
-            if (document.getElementById('auto-apply-toggle')?.checked) {
-              constSkillDetection(thinkingEl, full, appliedSkillIndices);
-            }
-          }
+          if (ev.type === 'chunk') { full += ev.text; updateMsgContent(thinkingEl, full); }
           if (ev.type === 'done') { chatHistory.push({ role: 'assistant', content: full }); }
           if (ev.type === 'error') { updateMsgContent(thinkingEl, '⚠ ' + ev.message); }
         } catch {}
@@ -856,10 +754,8 @@ async function sendChat() {
   document.getElementById('stop-btn').style.display = 'none';
   abortController = null;
 
-  // Auto-apply if enabled
-  if (document.getElementById('auto-apply-toggle')?.checked) {
-    applyAllSkills(thinkingEl);
-  }
+  // Look for code blocks in response — offer to create files
+  parseCodeBlocksFromResponse(full);
 }
 
 function stopChat() {
@@ -874,7 +770,7 @@ function clearChat() {
   renderContextChips();
   document.getElementById('chat-messages').innerHTML = `
     <div class="msg assistant">
-      <div class="msg-header"><span>Yazıcı</span></div>
+      <div class="msg-header"><span>GateAI</span></div>
       <div class="msg-content">New conversation started. How can I help?</div>
     </div>`;
 }
@@ -895,44 +791,8 @@ function appendMsg(role, text, thinking = false) {
 }
 
 function updateMsgContent(el, text) {
-  const chatMsgs = document.getElementById('chat-messages');
-  const isAtBottom = chatMsgs.scrollHeight - chatMsgs.scrollTop <= chatMsgs.clientHeight + 60;
-  
   el.querySelector('.msg-content').innerHTML = formatMsg(text);
-  
-  if (isAtBottom) {
-    chatMsgs.scrollTop = chatMsgs.scrollHeight;
-  }
-}
-
-function constSkillDetection(el, text, appliedSet) {
-  // Regex for CLOSED skill blocks (must match formatMsg)
-  const regex = /```(file|delete|exec|!):?\s*(.+?|bash)\n([\s\S]*?)```/g;
-  let match;
-  let index = 0;
-  while ((match = regex.exec(text)) !== null) {
-    if (!appliedSet.has(index)) {
-      const type = match[1];
-      const target = match[2];
-      const code = match[3];
-      
-      const actualType = type === '!' ? 'exec' : type;
-      const actualTarget = type === '!' ? 'terminal' : target;
-      const b64 = btoa(unescape(encodeURIComponent(code.trim())));
-      
-      // Find the button in the UI
-      const blocks = el.querySelectorAll('.skill-block');
-      const currentBlock = blocks[index];
-      if (currentBlock) {
-        const applyBtn = currentBlock.querySelector('.skill-btn:not(.dim)');
-        if (applyBtn && !applyBtn.disabled) {
-          handleSkill(actualType, actualTarget, b64, applyBtn, 'apply');
-          appliedSet.add(index);
-        }
-      }
-    }
-    index++;
-  }
+  document.getElementById('chat-messages').scrollTop = 99999;
 }
 
 function updateMsgBadge(el, route) {
@@ -941,33 +801,7 @@ function updateMsgBadge(el, route) {
 }
 
 function formatMsg(text) {
-  let skillCount = 0;
-  // Robust skill detection: handles file:path, !bash, exec: bash, etc.
-  text = text.replace(/```(file|delete|exec|!):?\s*(.+?|bash)\n([\s\S]*?)```/g, (_, type, target, code) => {
-    skillCount++;
-    const actualType = type === '!' ? 'exec' : type;
-    const actualTarget = type === '!' ? 'terminal' : target;
-    const escapedCode = escHtml(code.trim());
-    let btnText = actualType === 'file' ? 'Apply' : actualType === 'delete' ? 'Delete' : 'Run';
-    let btnClass = 'skill-btn' + (actualType === 'delete' ? ' danger' : '');
-    
-    const b64 = btoa(unescape(encodeURIComponent(code.trim())));
-    const skillId = `skill-${Math.random().toString(36).slice(2, 9)}`;
-    
-    return `<div class="skill-block" id="${skillId}">
-      <div class="skill-header">
-        <span>${actualType === 'file' ? 'File: ' : actualType === 'delete' ? 'Delete: ' : 'Exec: '}${actualTarget}</span>
-        <div style="display:flex;gap:4px;">
-          <button class="${btnClass}" onclick="handleSkill('${actualType}', '${actualTarget}', '${b64}', this, 'apply')">${btnText}</button>
-          <button class="skill-btn dim" onclick="handleSkill('${actualType}', '${actualTarget}', '${b64}', this, 'accept')">Accept</button>
-          <button class="skill-btn dim" onclick="handleSkill('${actualType}', '${actualTarget}', '${b64}', this, 'dismiss')">✕</button>
-        </div>
-      </div>
-      <pre><code>${escapedCode}</code></pre>
-    </div>`;
-  });
-
-  // Standard code blocks
+  // Code blocks
   text = text.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
     `<pre><code>${escHtml(code.trim())}</code></pre>`);
   // Inline code
@@ -976,96 +810,7 @@ function formatMsg(text) {
   text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   // Newlines
   text = text.replace(/\n/g, '<br>');
-  
-  if (skillCount > 1) {
-    text += `<button class="apply-all-btn" onclick="applyAllSkills(this.parentElement)">Apply All Actions (${skillCount})</button>`;
-  }
   return text;
-}
-
-async function handleSkill(type, target, b64, btn, action) {
-  const code = decodeURIComponent(escape(atob(b64)));
-  const skillBlock = btn.closest('.skill-block');
-  
-  if (action === 'dismiss') {
-    skillBlock.style.display = 'none';
-    return;
-  }
-  
-  if (action === 'accept') {
-    const btns = skillBlock.querySelectorAll('.skill-btn');
-    btns.forEach(b => b.disabled = true);
-    skillBlock.style.opacity = '0.6';
-    return;
-  }
-
-  // Action is 'apply'
-  btn.disabled = true;
-  const originalText = btn.textContent;
-  btn.textContent = '...';
-  
-  try {
-    if (type === 'file') {
-      const res = await fetch('/api/files/content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: target, content: code })
-      });
-      if (res.ok) {
-        termLog(`Successfully wrote to ${target}`, 'ok');
-        loadTree();
-        if (currentFile === target) openFile(target);
-        btn.textContent = 'Done';
-        skillBlock.querySelectorAll('.skill-btn').forEach(b => b !== btn && (b.style.display = 'none'));
-      } else {
-        throw new Error('Failed to write file');
-      }
-    } else if (type === 'delete') {
-      const res = await fetch(`/api/files?path=${encodeURIComponent(target)}`, { method: 'DELETE' });
-      if (res.ok) {
-        termLog(`Deleted ${target}`, 'ok');
-        loadTree();
-        btn.textContent = 'Deleted';
-        skillBlock.querySelectorAll('.skill-btn').forEach(b => b !== btn && (b.style.display = 'none'));
-      } else {
-        throw new Error('Failed to delete file');
-      }
-    } else if (type === 'exec') {
-      termLog(`Running: ${code}`, 'info');
-      const res = await fetch('/api/exec', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command: code })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        termLog(data.output, 'ok');
-        btn.textContent = 'Ran';
-        skillBlock.querySelectorAll('.skill-btn').forEach(b => b !== btn && (b.style.display = 'none'));
-      } else {
-        termLog(data.error || 'Execution failed', 'err');
-        btn.textContent = 'Failed';
-        btn.disabled = false;
-      }
-    }
-  } catch (err) {
-    termLog(err.message, 'err');
-    btn.textContent = 'Error';
-    btn.disabled = false;
-  }
-}
-
-async function applyAllSkills(container) {
-  const blocks = container.querySelectorAll('.skill-block');
-  for (const block of blocks) {
-    if (block.style.display === 'none') continue;
-    const applyBtn = block.querySelector('.skill-btn:not(.dim)');
-    if (applyBtn && !applyBtn.disabled) {
-      await applyBtn.click();
-      // Small delay to prevent race conditions if multiple files are written
-      await new Promise(r => setTimeout(r, 100));
-    }
-  }
 }
 
 // Auto-detect code files in AI response and offer to save

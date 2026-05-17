@@ -1,10 +1,8 @@
 import https from 'https';
-import type { IncomingHttpHeaders } from 'http';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type Message = { role: 'user' | 'assistant'; content: string };
-export type StreamResult = { statusCode: number; headers: IncomingHttpHeaders };
 
 // ─── Core HTTPS helper ────────────────────────────────────────────────────────
 
@@ -13,15 +11,12 @@ function httpsRequest(
   body: string,
   onChunk: (chunk: string | null) => void,
   signal?: AbortSignal,
-): Promise<StreamResult> {
+): Promise<number> {
   return new Promise((resolve, reject) => {
     const req = https.request(options, (res) => {
-      const result = { statusCode: res.statusCode ?? 0, headers: res.headers };
+      resolve(res.statusCode ?? 0);
       res.on('data', (c: Buffer) => onChunk(c.toString()));
-      res.on('end', () => {
-        onChunk(null);
-        resolve(result);
-      });
+      res.on('end', () => onChunk(null));
     });
     req.on('error', reject);
     if (signal) {
@@ -57,7 +52,7 @@ export async function streamClaude(
   model: string,
   onToken: (t: string) => void,
   signal?: AbortSignal,
-): Promise<StreamResult> {
+): Promise<number> {
   const body = JSON.stringify({ model, max_tokens: 8192, stream: true, messages });
   return httpsRequest(
     {
@@ -92,7 +87,7 @@ export async function streamGemini(
   model: string,
   onToken: (t: string) => void,
   signal?: AbortSignal,
-): Promise<StreamResult> {
+): Promise<number> {
   const contents = messages.map((m) => ({
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: m.content }],
@@ -126,7 +121,7 @@ export async function streamOpenAI(
   onToken: (t: string) => void,
   signal?: AbortSignal,
   hostname = 'api.openai.com',
-): Promise<StreamResult> {
+): Promise<number> {
   const body = JSON.stringify({ model, messages, stream: true });
   return httpsRequest(
     {
@@ -159,6 +154,6 @@ export async function streamDeepSeek(
   model: string,
   onToken: (t: string) => void,
   signal?: AbortSignal,
-): Promise<StreamResult> {
+): Promise<number> {
   return streamOpenAI(apiKey, messages, model, onToken, signal, 'api.deepseek.com');
 }

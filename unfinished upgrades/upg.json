@@ -1,0 +1,483 @@
+{
+      "düşünce": "Kısa plan",
+      "araç_adı": "read_file",
+      "parametreler": {"path": "src/main.py"}
+    }
+    ```
+*   **ContextAG’nin (Antigravity) o hantal, token canavarı mimarisini çöpe atıp, kendi sistemin **Yazici** için hem aşırı hafif hem de cebindeki token’ları sömürmeyecek **"dehşet-ül vahşet"** optimize açık kaynaklı araçları ve mimari hileleri listeliyorum. 
+
+Bunları bir araya getirdiğinde AG’den çok daha hızlı ve kota dostu bir canavar yaratırsın.
+
+---
+
+## 1. Tarayıcı ve Ekran Kontrolü İçin En Hafif Motorlar
+
+AG saniyede onlarca kez ekran resmi (Ağır Görsel Token) gönderdiği için batıyor. Biz bunun yerine metin tabanlı veya koordinat odaklı hafif araçlar kullanacağız.
+
+### [Browser-Use](https://github.com/browser-use/browser-use) (Python)
+*   **Neden Dehşet?:** Tarayıcıyı yapay zekaya teslim etmenin şu an dünyadaki en optimize yolu. Ekran görüntüsü göndermek yerine, sayfanın HTML/DOM yapısını inanılmaz derecede küçülterek (sadece tıklanabilir elemanları ayıklayarak) modele metin olarak gönderir. 
+*   **Token Tasarrufu:** %80! Görsel token harcamadığı için Gemini veya Claude ile çerez niyetine token harcayarak tarayıcıyı uçurur.
+
+### [OSWorld / Computer Use Olasılığı Yerine: PyAutoGUI + OS-World Lite]
+*   Eğer tarayıcı dışında direkt masaüstünü kontrol etsin istiyorsan, Anthropic’in ham demosunu kullanma (çok hantaldır). 
+*   **Çözüm:** Modelden sadece koordinat iste. Modele ekranın 800x600'lük çok küçük ve sıkıştırılmış bir halini gönder. Model sana `{"click": [450, 200]}` dönsün, sen arka planda bunu Python'un **PyAutoGUI** kütüphanesiyle tıkla. Sıfır kütüphane yükü, maksimum hız.
+
+---
+
+## 2. Dosya Okuma/Yazma ve Kod Tabanı (Context) Yönetimi
+
+Yazici'nın mevcut projedeki kodları okuyamaması sorununu çözmek ve bunu yaparken tüm projeyi modele yedirip token bitirmemek için şu ikiliyi entegre et:
+
+### [Aider](https://github.com/aider-chat/aider) Mimarisini Klonla (Repo Map)
+*   **Neden Dehşet?:** Aider, terminalde çalışan efsane bir yapay zeka kodlama asistanıdır. Sırrı şu: Modele tüm dosyaları asla göndermez. Projenin bir **"Giriş Haritasını" (Repository Map)** çıkarır. Modele sadece hangi dosyada hangi fonksiyonların ve sınıfların olduğunu (içeriği olmadan, sadece isimlerini) söyler.
+*   **Token Tasarrufu:** %90! Model haritaya bakar, *"Bana sadece `auth.py` içindeki `login` fonksiyonunun içeriği lazım"* der. Yazici gider sadece o 10 satırı okur modele getirir. 
+
+### [Ripgrep](https://github.com/BurntSushi/ripgrep) (Sistem Aracı)
+*   Yazici'ya dosya arama yeteneği vereceksen, bunu Python ile döngüye sokma. Sisteme `ripgrep` (rg) kur. Yapay zeka proje içinde bir kod arayacağı zaman arka planda `rg "aranan_kelime"` çalıştırıp saniyenin onda birinde sadece ilgili satırları çeksin.
+
+---
+
+## 3. Yapay Zekayı Çizgide Tutacak "Hafif" Ajan İskeletleri
+
+AG gibi sistemler kendi kendilerine konuşup sonsuz döngüye (loop) girer ve token bitirir. Bu döngüyü en katı ve hafif şekilde yöneten framework'ler:
+
+### [Microsoft AutoGen (Lite/Core)] veya [LangGraph]
+*   **Neden Dehşet?:** Modeli tek başına bırakırsan saçmalar. LangGraph ile ona katı bir akış diyagramı (State Machine) çizersin. 
+*   **Örnek Akış:** `Başla -> Dosyayı Ara -> Dosyayı Oku -> Kodu Yaz -> Çalıştır ve Test Et -> Dur.` Model bu akışın dışına çıkıp kendi kendine tarayıcıda YouTube açamaz. Gereksiz hiçbir adım atmadığı için token israfı sıfıra iner.
+
+---
+
+## 4. Dehşet-ül Vahşet Token Tasarrufu Sağlayan Mimari Hileler (Prompt Engineering)
+
+Kodlama altyapısını kurarken Yazici'nın sistem promptuna ve API ayarlarına şunları göm:
+
+*   **Gevezeliği Yasakla (No-Prose):** API çağrısı yaparken sistem talimatının başına şunu yaz: `"Asla açıklama yapma. Sohbet etme. Sorulan soruya veya göreve SADECE ham kod veya JSON formatında cevap ver. Her ekstra kelime için cezalandırılacaksın."` Bu hamle bile girdi-çıktı token maliyetini yarı yarıya düşürür.
+*   **JSON Mode / Structured Outputs:** Modelin kafasına göre metin üretmesini engelle. Gemini ve Claude'da bulunan `structured_output` özelliğini aç ve modelin sadece şu formatta konuşmasını zorunlu kıl:
+    ```json
+    {
+      "düşünce": "Kısa plan",
+      "araç_adı": "read_file",
+      "parametreler": {"path": "src/main.py"}
+    }
+    ```
+*   **Context Caching (Bağlam Önbellekleme):** Yazici çalışırken projenin değişmeyen ana dAG’nin (Antigravity) o hantal, token canavarı mimarisini çöpe atıp, kendi sistemin **Yazici** için hem aşırı hafif hem de cebindeki token’ları sömürmeyecek **"dehşet-ül vahşet"** optimize açık kaynaklı araçları ve mimari hileleri listeliyorum. 
+
+Bunları bir araya getirdiğinde AG’den çok daha hızlı ve kota dostu bir canavar yaratırsın.
+
+---
+
+## 1. Tarayıcı ve Ekran Kontrolü İçin En Hafif Motorlar
+
+AG saniyede onlarca kez ekran resmi (Ağır Görsel Token) gönderdiği için batıyor. Biz bunun yerine metin tabanlı veya koordinat odaklı hafif araçlar kullanacağız.
+
+### [Browser-Use](https://github.com/browser-use/browser-use) (Python)
+*   **Neden Dehşet?:** Tarayıcıyı yapay zekaya teslim etmenin şu an dünyadaki en optimize yolu. Ekran görüntüsü göndermek yerine, sayfanın HTML/DOM yapısını inanılmaz derecede küçülterek (sadece tıklanabilir elemanları ayıklayarak) modele metin olarak gönderir. 
+*   **Token Tasarrufu:** %80! Görsel token harcamadığı için Gemini veya Claude ile çerez niyetine token harcayarak tarayıcıyı uçurur.
+
+### [OSWorld / Computer Use Olasılığı Yerine: PyAutoGUI + OS-World Lite]
+*   Eğer tarayıcı dışında direkt masaüstünü kontrol etsin istiyorsan, Anthropic’in ham demosunu kullanma (çok hantaldır). 
+*   **Çözüm:** Modelden sadece koordinat iste. Modele ekranın 800x600'lük çok küçük ve sıkıştırılmış bir halini gönder. Model sana `{"click": [450, 200]}` dönsün, sen arka planda bunu Python'un **PyAutoGUI** kütüphanesiyle tıkla. Sıfır kütüphane yükü, maksimum hız.
+
+---
+
+## 2. Dosya Okuma/Yazma ve Kod Tabanı (Context) Yönetimi
+
+Yazici'nın mevcut projedeki kodları okuyamaması sorununu çözmek ve bunu yaparken tüm projeyi modele yedirip token bitirmemek için şu ikiliyi entegre et:
+
+### [Aider](https://github.com/aider-chat/aider) Mimarisini Klonla (Repo Map)
+*   **Neden Dehşet?:** Aider, terminalde çalışan efsane bir yapay zeka kodlama asistanıdır. Sırrı şu: Modele tüm dosyaları asla göndermez. Projenin bir **"Giriş Haritasını" (Repository Map)** çıkarır. Modele sadece hangi dosyada hangi fonksiyonların ve sınıfların olduğunu (içeriği olmadan, sadece isimlerini) söyler.
+*   **Token Tasarrufu:** %90! Model haritaya bakar, *"Bana sadece `auth.py` içindeki `login` fonksiyonunun içeriği lazım"* der. Yazici gider sadece o 10 satırı okur modele getirir. 
+
+### [Ripgrep](https://github.com/BurntSushi/ripgrep) (Sistem Aracı)
+*   Yazici'ya dosya arama yeteneği vereceksen, bunu Python ile döngüye sokma. Sisteme `ripgrep` (rg) kur. Yapay zeka proje içinde bir kod arayacağı zaman arka planda `rg "aranan_kelime"` çalıştırıp saniyenin onda birinde sadece ilgili satırları çeksin.
+
+---
+
+## 3. Yapay Zekayı Çizgide Tutacak "Hafif" Ajan İskeletleri
+
+AG gibi sistemler kendi kendilerine konuşup sonsuz döngüye (loop) girer ve token bitirir. Bu döngüyü en katı ve hafif şekilde yöneten framework'ler:
+
+### [Microsoft AutoGen (Lite/Core)] veya [LangGraph]
+*   **Neden Dehşet?:** Modeli tek başına bırakırsan saçmalar. LangGraph ile ona katı bir akış diyagramı (State Machine) çizersin. 
+*   **Örnek Akış:** `Başla -> Dosyayı Ara -> Dosyayı Oku -> Kodu Yaz -> Çalıştır ve Test Et -> Dur.` Model bu akışın dışına çıkıp kendi kendine tarayıcıda YouTube açamaz. Gereksiz hiçbir adım atmadığı için token israfı sıfıra iner.
+
+---
+
+## 4. Dehşet-ül Vahşet Token Tasarrufu Sağlayan Mimari Hileler (Prompt Engineering)
+
+Kodlama altyapısını kurarken Yazici'nın sistem promptuna ve API ayarlarına şunları göm:
+
+*   **Gevezeliği Yasakla (No-Prose):** API çağrısı yaparken sistem talimatının başına şunu yaz: `"Asla açıklama yapma. Sohbet etme. Sorulan soruya veya göreve SADECE ham kod veya JSON formatında cevap ver. Her ekstra kelime için cezalandırılacaksın."` Bu hamle bile girdi-çıktı token maliyetini yarı yarıya düşürür.
+*   **JSON Mode / Structured Outputs:** Modelin kafasına göre metin üretmesini engelle. Gemini ve Claude'da bulunan `structured_output` özelliğini aç ve modelin sadece şu formatta konuşmasını zorunlu kıl:
+    ```json
+    {
+      "düşünce": "Kısa plan",
+      "araç_adı": "read_file",
+      "parametreler": {"path": "src/main.py"}
+    }
+    ```
+*   **Context Caching (Bağlam Önbellekleme):** Yazici çalışırken projenin değişmeyen ana dökümantasyonunu ve kütüphane bilgilerini API tarafında **Context Cache** olarak işaretle. Gemini AG’nin (Antigravity) o hantal, token canavarı mimarisini çöpe atıp, kendi sistemin **Yazici** için hem aşırı hafif hem de cebindeki token’ları sömürmeyecek **"dehşet-ül vahşet"** optimize açık kaynaklı araçları ve mimari hileleri listeliyorum. 
+
+Bunları bir araya getirdiğinde AG’den çok daha hızlı ve kota dostu bir canavar yaratırsın.
+
+---
+
+## 1. Tarayıcı ve Ekran Kontrolü İçin En Hafif Motorlar
+
+AG saniyede onlarca kez ekran resmi (Ağır Görsel Token) gönderdiği için batıyor. Biz bunun yerine metin tabanlı veya koordinat odaklı hafif araçlar kullanacağız.
+
+### [Browser-Use](https://github.com/browser-use/browser-use) (Python)
+*   **Neden Dehşet?:** Tarayıcıyı yapay zekaya teslim etmenin şu an dünyadaki en optimize yolu. Ekran görüntüsü göndermek yerine, sayfanın HTML/DOM yapısını inanılmaz derecede küçülterek (sadece tıklanabilir elemanları ayıklayarak) modele metin olarak gönderir. 
+*   **Token Tasarrufu:** %80! Görsel token harcamadığı için Gemini veya Claude ile çerez niyetine token harcayarak tarayıcıyı uçurur.
+
+### [OSWorld / Computer Use Olasılığı Yerine: PyAutoGUI + OS-World Lite]
+*   Eğer tarayıcı dışında direkt masaüstünü kontrol etsin istiyorsan, Anthropic’in ham demosunu kullanma (çok hantaldır). 
+*   **Çözüm:** Modelden sadece koordinat iste. Modele ekranın 800x600'lük çok küçük ve sıkıştırılmış bir halini gönder. Model sana `{"click": [450, 200]}` dönsün, sen arka planda bunu Python'un **PyAutoGUI** kütüphanesiyle tıkla. Sıfır kütüphane yükü, maksimum hız.
+
+---
+
+## 2. Dosya Okuma/Yazma ve Kod Tabanı (Context) Yönetimi
+
+Yazici'nın mevcut projedeki kodları okuyamaması sorununu çözmek ve bunu yaparken tüm projeyi modele yedirip token bitirmemek için şu ikiliyi entegre et:
+
+### [Aider](https://github.com/aider-chat/aider) Mimarisini Klonla (Repo Map)
+*   **Neden Dehşet?:** Aider, terminalde çalışan efsane bir yapay zeka kodlama asistanıdır. Sırrı şu: Modele tüm dosyaları asla göndermez. Projenin bir **"Giriş Haritasını" (Repository Map)** çıkarır. Modele sadece hangi dosyada hangi fonksiyonların ve sınıfların olduğunu (içeriği olmadan, sadece isimlerini) söyler.
+*   **Token Tasarrufu:** %90! Model haritaya bakar, *"Bana sadece `auth.py` içindeki `login` fonksiyonunun içeriği lazım"* der. Yazici gider sadece o 10 satırı okur modele getirir. 
+
+### [Ripgrep](https://github.com/BurntSushi/ripgrep) (Sistem Aracı)
+*   Yazici'ya dosya arama yeteneği vereceksen, bunu Python ile döngüye sokma. Sisteme `ripgrep` (rg) kur. Yapay zeka proje içinde bir kod arayacağı zaman arka planda `rg "aranan_kelime"` çalıştırıp saniyenin onda birinde sadece ilgili satırları çeksin.
+
+---
+
+## 3. Yapay Zekayı Çizgide Tutacak "Hafif" Ajan İskeletleri
+
+AG gibi sistemler kendi kendilerine konuşup sonsuz döngüye (loop) girer ve token bitirir. Bu döngüyü en katı ve hafif şekilde yöneten framework'ler:
+
+### [Microsoft AutoGen (Lite/Core)] veya [LangGraph]
+*   **Neden Dehşet?:** Modeli tek başına bırakırsan saçmalar. LangGraph ile ona katı bir akış diyagramı (State Machine) çizersin. 
+*   **Örnek Akış:** `Başla -> Dosyayı Ara -> Dosyayı Oku -> Kodu Yaz -> Çalıştır ve Test Et -> Dur.` Model bu akışın dışına çıkıp kendi kendine tarayıcıda YouTube açamaz. Gereksiz hiçbir adım atmadığı için token israfı sıfıra iner.
+
+---
+
+## 4. Dehşet-ül Vahşet Token Tasarrufu Sağlayan Mimari Hileler (Prompt Engineering)
+
+Kodlama altyapısını kurarken Yazici'nın sistem promptuna ve API ayarlarına şunları göm:
+
+*   **Gevezeliği Yasakla (No-Prose):** API çağrısı yaparken sistem talimatının başına şunu yaz: `"Asla açıklama yapma. Sohbet etme. Sorulan soruya veya göreve SADECE ham kod veya JSON formatında cevap ver. Her ekstra kelime için cezalandırılacaksın."` Bu hamle bile girdi-çıktı token maliyetini yarı yarıya düşürür.
+*   **JSON Mode / Structured Outputs:** Modelin kafasına göre metin üretmesini engelle. Gemini ve Claude'da bulunan `structured_output` özelliğini aç ve modelin sadece şu formatta konuşmasını zorunlu kıl:
+    ```json
+    {
+      "düşünce": "Kısa plan",
+      "araç_adı": "read_file",
+      "parametreler": {"path": "src/main.py"}
+    }
+    ```
+*   **Context Caching (Bağlam Önbellekleme):** Yazici çalışırken projenin değişmeyen ana dökümantasyonunu ve kütüphane bilgilerini API tarafında **Context Cache** olarak işaretle. Gemini 3 Flash, önbelleğe alınmış token'lar için normal fiyatın/kotanın çok daha küçük bir kısmını harAG’nin (Antigravity) o hantal, token canavarı mimarisini çöpe atıp, kendi sistemin **Yazici** için hem aşırı hafif hem de cebindeki token’ları sömürmeyecek **"dehşet-ül vahşet"** optimize açık kaynaklı araçları ve mimari hileleri listeliyorum. 
+
+Bunları bir araya getirdiğinde AG’den çok daha hızlı ve kota dostu bir canavar yaratırsın.
+
+---
+
+## 1. Tarayıcı ve Ekran Kontrolü İçin En Hafif Motorlar
+
+AG saniyede onlarca kez ekran resmi (Ağır Görsel Token) gönderdiği için batıyor. Biz bunun yerine metin tabanlı veya koordinat odaklı hafif araçlar kullanacağız.
+
+### [Browser-Use](https://github.com/browser-use/browser-use) (Python)
+*   **Neden Dehşet?:** Tarayıcıyı yapay zekaya teslim etmenin şu an dünyadaki en optimize yolu. Ekran görüntüsü göndermek yerine, sayfanın HTML/DOM yapısını inanılmaz derecede küçülterek (sadece tıklanabilir elemanları ayıklayarak) modele metin olarak gönderir. 
+*   **Token Tasarrufu:** %80! Görsel token harcamadığı için Gemini veya Claude ile çerez niyetine token harcayarak tarayıcıyı uçurur.
+
+### [OSWorld / Computer Use Olasılığı Yerine: PyAutoGUI + OS-World Lite]
+*   Eğer tarayıcı dışında direkt masaüstünü kontrol etsin istiyorsan, Anthropic’in ham demosunu kullanma (çok hantaldır). 
+*   **Çözüm:** Modelden sadece koordinat iste. Modele ekranın 800x600'lük çok küçük ve sıkıştırılmış bir halini gönder. Model sana `{"click": [450, 200]}` dönsün, sen arka planda bunu Python'un **PyAutoGUI** kütüphanesiyle tıkla. Sıfır kütüphane yükü, maksimum hız.
+
+---
+
+## 2. Dosya Okuma/Yazma ve Kod Tabanı (Context) Yönetimi
+
+Yazici'nın mevcut projedeki kodları okuyamaması sorununu çözmek ve bunu yaparken tüm projeyi modele yedirip token bitirmemek için şu ikiliyi entegre et:
+
+### [Aider](https://github.com/aider-chat/aider) Mimarisini Klonla (Repo Map)
+*   **Neden Dehşet?:** Aider, terminalde çalışan efsane bir yapay zeka kodlama asistanıdır. Sırrı şu: Modele tüm dosyaları asla göndermez. Projenin bir **"Giriş Haritasını" (Repository Map)** çıkarır. Modele sadece hangi dosyada hangi fonksiyonların ve sınıfların olduğunu (içeriği olmadan, sadece isimlerini) söyler.
+*   **Token Tasarrufu:** %90! Model haritaya bakar, *"Bana sadece `auth.py` içindeki `login` fonksiyonunun içeriği lazım"* der. Yazici gider sadece o 10 satırı okur modele getirir. 
+
+### [Ripgrep](https://github.com/BurntSushi/ripgrep) (Sistem Aracı)
+*   Yazici'ya dosya arama yeteneği vereceksen, bunu Python ile döngüye sokma. Sisteme `ripgrep` (rg) kur. Yapay zeka proje içinde bir kod arayacağı zaman arka planda `rg "aranan_kelime"` çalıştırıp saniyenin onda birinde sadece ilgili satırları çeksin.
+
+---
+
+## 3. Yapay Zekayı Çizgide Tutacak "Hafif" Ajan İskeletleri
+
+AG gibi sistemler kendi kendilerine konuşup sonsuz döngüye (loop) girer ve token bitirir. Bu döngüyü en katı ve hafif şekilde yöneten framework'ler:
+
+### [Microsoft AutoGen (Lite/Core)] veya [LangGraph]
+*   **Neden Dehşet?:** Modeli tek başına bırakırsan saçmalar. LangGraph ile ona katı bir akış diyagramı (State Machine) çizersin. 
+*   **Örnek Akış:** `Başla -> Dosyayı Ara -> Dosyayı Oku -> Kodu Yaz -> Çalıştır ve Test Et -> Dur.` Model bu akışın dışına çıkıp kendi kendine tarayıcıda YouTube açamaz. Gereksiz hiçbir adım atmadığı için token israfı sıfıra iner.
+
+---
+
+## 4. Dehşet-ül Vahşet Token Tasarrufu Sağlayan Mimari Hileler (Prompt Engineering)
+
+Kodlama altyapısını kurarken Yazici'nın sistem promptuna ve API ayarlarına şunları göm:
+
+*   **Gevezeliği Yasakla (No-Prose):** API çağrısı yaparken sistem talimatının başına şunu yaz: `"Asla açıklama yapma. Sohbet etme. Sorulan soruya veya göreve SADECE ham kod veya JSON formatında cevap ver. Her ekstra kelime için cezalandırılacaksın."` Bu hamle bile girdi-çıktı token maliyetini yarı yarıya düşürür.
+*   **JSON Mode / Structured Outputs:** Modelin kafasına göre metin üretmesini engelle. Gemini ve Claude'da bulunan `structured_output` özelliğini aç ve modelin sadece şu formatta konuşmasını zorunlu kıl:
+    ```json
+    {
+      "düşünce": "Kısa plan",
+      "araç_adı": "read_file",
+      "parametreler": {"path": "src/main.py"}
+    }
+    ```
+*   **Context Caching (Bağlam Önbellekleme):** Yazici çalışırken projenin değişmeyen ana dökümantasyonunu ve kütüphane bilgilerini API tarafında **Context Cache** olarak işaretle. Gemini 3 Flash, önbelleğe alınmış token'lar için normal fiyatın/kotanın çok daha küçük bir kısmını harcar.
+
+## Özet Paket
+
+Yazici'yı ayağa kaldırmak için AG'den kopya çAG’nin (Antigravity) o hantal, token canavarı mimarisini çöpe atıp, kendi sistemin **Yazici** için hem aşırı hafif hem de cebindeki token’ları sömürmeyecek **"dehşet-ül vahşet"** optimize açık kaynaklı araçları ve mimari hileleri listeliyorum. 
+
+Bunları bir araya getirdiğinde AG’den çok daha hızlı ve kota dostu bir canavar yaratırsın.
+
+---
+
+## 1. Tarayıcı ve Ekran Kontrolü İçin En Hafif Motorlar
+
+AG saniyede onlarca kez ekran resmi (Ağır Görsel Token) gönderdiği için batıyor. Biz bunun yerine metin tabanlı veya koordinat odaklı hafif araçlar kullanacağız.
+
+### [Browser-Use](https://github.com/browser-use/browser-use) (Python)
+*   **Neden Dehşet?:** Tarayıcıyı yapay zekaya teslim etmenin şu an dünyadaki en optimize yolu. Ekran görüntüsü göndermek yerine, sayfanın HTML/DOM yapısını inanılmaz derecede küçülterek (sadece tıklanabilir elemanları ayıklayarak) modele metin olarak gönderir. 
+*   **Token Tasarrufu:** %80! Görsel token harcamadığı için Gemini veya Claude ile çerez niyetine token harcayarak tarayıcıyı uçurur.
+
+### [OSWorld / Computer Use Olasılığı Yerine: PyAutoGUI + OS-World Lite]
+*   Eğer tarayıcı dışında direkt masaüstünü kontrol etsin istiyorsan, Anthropic’in ham demosunu kullanma (çok hantaldır). 
+*   **Çözüm:** Modelden sadece koordinat iste. Modele ekranın 800x600'lük çok küçük ve sıkıştırılmış bir halini gönder. Model sana `{"click": [450, 200]}` dönsün, sen arka planda bunu Python'un **PyAutoGUI** kütüphanesiyle tıkla. Sıfır kütüphane yükü, maksimum hız.
+
+---
+
+## 2. Dosya Okuma/Yazma ve Kod Tabanı (Context) Yönetimi
+
+Yazici'nın mevcut projedeki kodları okuyamaması sorununu çözmek ve bunu yaparken tüm projeyi modele yedirip token bitirmemek için şu ikiliyi entegre et:
+
+### [Aider](https://github.com/aider-chat/aider) Mimarisini Klonla (Repo Map)
+*   **Neden Dehşet?:** Aider, terminalde çalışan efsane bir yapay zeka kodlama asistanıdır. Sırrı şu: Modele tüm dosyaları asla göndermez. Projenin bir **"Giriş Haritasını" (Repository Map)** çıkarır. Modele sadece hangi dosyada hangi fonksiyonların ve sınıfların olduğunu (içeriği olmadan, sadece isimlerini) söyler.
+*   **Token Tasarrufu:** %90! Model haritaya bakar, *"Bana sadece `auth.py` içindeki `login` fonksiyonunun içeriği lazım"* der. Yazici gider sadece o 10 satırı okur modele getirir. 
+
+### [Ripgrep](https://github.com/BurntSushi/ripgrep) (Sistem Aracı)
+*   Yazici'ya dosya arama yeteneği vereceksen, bunu Python ile döngüye sokma. Sisteme `ripgrep` (rg) kur. Yapay zeka proje içinde bir kod arayacağı zaman arka planda `rg "aranan_kelime"` çalıştırıp saniyenin onda birinde sadece ilgili satırları çeksin.
+
+---
+
+## 3. Yapay Zekayı Çizgide Tutacak "Hafif" Ajan İskeletleri
+
+AG gibi sistemler kendi kendilerine konuşup sonsuz döngüye (loop) girer ve token bitirir. Bu döngüyü en katı ve hafif şekilde yöneten framework'ler:
+
+### [Microsoft AutoGen (Lite/Core)] veya [LangGraph]
+*   **Neden Dehşet?:** Modeli tek başına bırakırsan saçmalar. LangGraph ile ona katı bir akış diyagramı (State Machine) çizersin. 
+*   **Örnek Akış:** `Başla -> Dosyayı Ara -> Dosyayı Oku -> Kodu Yaz -> Çalıştır ve Test Et -> Dur.` Model bu akışın dışına çıkıp kendi kendine tarayıcıda YouTube açamaz. Gereksiz hiçbir adım atmadığı için token israfı sıfıra iner.
+
+---
+
+## 4. Dehşet-ül Vahşet Token Tasarrufu Sağlayan Mimari Hileler (Prompt Engineering)
+
+Kodlama altyapısını kurarken Yazici'nın sistem promptuna ve API ayarlarına şunları göm:
+
+*   **Gevezeliği Yasakla (No-Prose):** API çağrısı yaparken sistem talimatının başına şunu yaz: `"Asla açıklama yapma. Sohbet etme. Sorulan soruya veya göreve SADECE ham kod veya JSON formatında cevap ver. Her ekstra kelime için cezalandırılacaksın."` Bu hamle bile girdi-çıktı token maliyetini yarı yarıya düşürür.
+*   **JSON Mode / Structured Outputs:** Modelin kafasına göre metin üretmesini engelle. Gemini ve Claude'da bulunan `structured_output` özelliğini aç ve modelin sadece şu formatta konuşmasını zorunlu kıl:
+    ```json
+    {
+      "düşünce": "Kısa plan",
+      "araç_adı": "read_file",
+      "parametreler": {"path": "src/main.py"}
+    }
+    ```
+*   **Context Caching (Bağlam Önbellekleme):** Yazici çalışırken projenin değişmeyen ana dökümantasyonunu ve kütüphane bilgilerini API tarafında **Context Cache** olarak işaretle. Gemini 3 Flash, önbelleğe alınmış token'lar için normal fiyatın/kotanın çok daha küçük bir kısmını harcar.
+
+## Özet Paket
+
+Yazici'yı ayağa kaldırmak için AG'den kopya çekeceğin ideal kombinasyon:
+**Claude 3.5 Sonnet veya Gemini 3 Flash** + **Browser-Use** (AG’nin (Antigravity) o hantal, token canavarı mimarisini çöpe atıp, kendi sistemin **Yazici** için hem aşırı hafif hem de cebindeki token’ları sömürmeyecek **"dehşet-ül vahşet"** optimize açık kaynaklı araçları ve mimari hileleri listeliyorum. 
+
+Bunları bir araya getirdiğinde AG’den çok daha hızlı ve kota dostu bir canavar yaratırsın.
+
+---
+
+## 1. Tarayıcı ve Ekran Kontrolü İçin En Hafif Motorlar
+
+AG saniyede onlarca kez ekran resmi (Ağır Görsel Token) gönderdiği için batıyor. Biz bunun yerine metin tabanlı veya koordinat odaklı hafif araçlar kullanacağız.
+
+### [Browser-Use](https://github.com/browser-use/browser-use) (Python)
+*   **Neden Dehşet?:** Tarayıcıyı yapay zekaya teslim etmenin şu an dünyadaki en optimize yolu. Ekran görüntüsü göndermek yerine, sayfanın HTML/DOM yapısını inanılmaz derecede küçülterek (sadece tıklanabilir elemanları ayıklayarak) modele metin olarak gönderir. 
+*   **Token Tasarrufu:** %80! Görsel token harcamadığı için Gemini veya Claude ile çerez niyetine token harcayarak tarayıcıyı uçurur.
+
+### [OSWorld / Computer Use Olasılığı Yerine: PyAutoGUI + OS-World Lite]
+*   Eğer tarayıcı dışında direkt masaüstünü kontrol etsin istiyorsan, Anthropic’in ham demosunu kullanma (çok hantaldır). 
+*   **Çözüm:** Modelden sadece koordinat iste. Modele ekranın 800x600'lük çok küçük ve sıkıştırılmış bir halini gönder. Model sana `{"click": [450, 200]}` dönsün, sen arka planda bunu Python'un **PyAutoGUI** kütüphanesiyle tıkla. Sıfır kütüphane yükü, maksimum hız.
+
+---
+
+## 2. Dosya Okuma/Yazma ve Kod Tabanı (Context) Yönetimi
+
+Yazici'nın mevcut projedeki kodları okuyamaması sorununu çözmek ve bunu yaparken tüm projeyi modele yedirip token bitirmemek için şu ikiliyi entegre et:
+
+### [Aider](https://github.com/aider-chat/aider) Mimarisini Klonla (Repo Map)
+*   **Neden Dehşet?:** Aider, terminalde çalışan efsane bir yapay zeka kodlama asistanıdır. Sırrı şu: Modele tüm dosyaları asla göndermez. Projenin bir **"Giriş Haritasını" (Repository Map)** çıkarır. Modele sadece hangi dosyada hangi fonksiyonların ve sınıfların olduğunu (içeriği olmadan, sadece isimlerini) söyler.
+*   **Token Tasarrufu:** %90! Model haritaya bakar, *"Bana sadece `auth.py` içindeki `login` fonksiyonunun içeriği lazım"* der. Yazici gider sadece o 10 satırı okur modele getirir. 
+
+### [Ripgrep](https://github.com/BurntSushi/ripgrep) (Sistem Aracı)
+*   Yazici'ya dosya arama yeteneği vereceksen, bunu Python ile döngüye sokma. Sisteme `ripgrep` (rg) kur. Yapay zeka proje içinde bir kod arayacağı zaman arka planda `rg "aranan_kelime"` çalıştırıp saniyenin onda birinde sadece ilgili satırları çeksin.
+
+---
+
+## 3. Yapay Zekayı Çizgide Tutacak "Hafif" Ajan İskeletleri
+
+AG gibi sistemler kendi kendilerine konuşup sonsuz döngüye (loop) girer ve token bitirir. Bu döngüyü en katı ve hafif şekilde yöneten framework'ler:
+
+### [Microsoft AutoGen (Lite/Core)] veya [LangGraph]
+*   **Neden Dehşet?:** Modeli tek başına bırakırsan saçmalar. LangGraph ile ona katı bir akış diyagramı (State Machine) çizersin. 
+*   **Örnek Akış:** `Başla -> Dosyayı Ara -> Dosyayı Oku -> Kodu Yaz -> Çalıştır ve Test Et -> Dur.` Model bu akışın dışına çıkıp kendi kendine tarayıcıda YouTube açamaz. Gereksiz hiçbir adım atmadığı için token israfı sıfıra iner.
+
+---
+
+## 4. Dehşet-ül Vahşet Token Tasarrufu Sağlayan Mimari Hileler (Prompt Engineering)
+
+Kodlama altyapısını kurarken Yazici'nın sistem promptuna ve API ayarlarına şunları göm:
+
+*   **Gevezeliği Yasakla (No-Prose):** API çağrısı yaparken sistem talimatının başına şunu yaz: `"Asla açıklama yapma. Sohbet etme. Sorulan soruya veya göreve SADECE ham kod veya JSON formatında cevap ver. Her ekstra kelime için cezalandırılacaksın."` Bu hamle bile girdi-çıktı token maliyetini yarı yarıya düşürür.
+*   **JSON Mode / Structured Outputs:** Modelin kafasına göre metin üretmesini engelle. Gemini ve Claude'da bulunan `structured_output` özelliğini aç ve modelin sadece şu formatta konuşmasını zorunlu kıl:
+    ```json
+    {
+      "düşünce": "Kısa plan",
+      "araç_adı": "read_file",
+      "parametreler": {"path": "src/main.py"}
+    }
+    ```
+*   **Context Caching (Bağlam Önbellekleme):** Yazici çalışırken projenin değişmeyen ana dökümantasyonunu ve kütüphane bilgilerini API tarafında **Context Cache** olarak işaretle. Gemini 3 Flash, önbelleğe alınmış token'lar için normal fiyatın/kotanın çok daha küçük bir kısmını harcar.
+
+## Özet Paket
+
+Yazici'yı ayağa kaldırmak için AG'den kopya çekeceğin ideal kombinasyon:
+**Claude 3.5 Sonnet veya Gemini 3 Flash** + **Browser-Use** (Tarayıcı için) + **Aider tarzı Repo Map** (Dosya okuma için) + **StrictAG’nin (Antigravity) o hantal, token canavarı mimarisini çöpe atıp, kendi sistemin **Yazici** için hem aşırı hafif hem de cebindeki token’ları sömürmeyecek **"dehşet-ül vahşet"** optimize açık kaynaklı araçları ve mimari hileleri listeliyorum. 
+
+Bunları bir araya getirdiğinde AG’den çok daha hızlı ve kota dostu bir canavar yaratırsın.
+
+---
+
+## 1. Tarayıcı ve Ekran Kontrolü İçin En Hafif Motorlar
+
+AG saniyede onlarca kez ekran resmi (Ağır Görsel Token) gönderdiği için batıyor. Biz bunun yerine metin tabanlı veya koordinat odaklı hafif araçlar kullanacağız.
+
+### [Browser-Use](https://github.com/browser-use/browser-use) (Python)
+*   **Neden Dehşet?:** Tarayıcıyı yapay zekaya teslim etmenin şu an dünyadaki en optimize yolu. Ekran görüntüsü göndermek yerine, sayfanın HTML/DOM yapısını inanılmaz derecede küçülterek (sadece tıklanabilir elemanları ayıklayarak) modele metin olarak gönderir. 
+*   **Token Tasarrufu:** %80! Görsel token harcamadığı için Gemini veya Claude ile çerez niyetine token harcayarak tarayıcıyı uçurur.
+
+### [OSWorld / Computer Use Olasılığı Yerine: PyAutoGUI + OS-World Lite]
+*   Eğer tarayıcı dışında direkt masaüstünü kontrol etsin istiyorsan, Anthropic’in ham demosunu kullanma (çok hantaldır). 
+*   **Çözüm:** Modelden sadece koordinat iste. Modele ekranın 800x600'lük çok küçük ve sıkıştırılmış bir halini gönder. Model sana `{"click": [450, 200]}` dönsün, sen arka planda bunu Python'un **PyAutoGUI** kütüphanesiyle tıkla. Sıfır kütüphane yükü, maksimum hız.
+
+---
+
+## 2. Dosya Okuma/Yazma ve Kod Tabanı (Context) Yönetimi
+
+Yazici'nın mevcut projedeki kodları okuyamaması sorununu çözmek ve bunu yaparken tüm projeyi modele yedirip token bitirmemek için şu ikiliyi entegre et:
+
+### [Aider](https://github.com/aider-chat/aider) Mimarisini Klonla (Repo Map)
+*   **Neden Dehşet?:** Aider, terminalde çalışan efsane bir yapay zeka kodlama asistanıdır. Sırrı şu: Modele tüm dosyaları asla göndermez. Projenin bir **"Giriş Haritasını" (Repository Map)** çıkarır. Modele sadece hangi dosyada hangi fonksiyonların ve sınıfların olduğunu (içeriği olmadan, sadece isimlerini) söyler.
+*   **Token Tasarrufu:** %90! Model haritaya bakar, *"Bana sadece `auth.py` içindeki `login` fonksiyonunun içeriği lazım"* der. Yazici gider sadece o 10 satırı okur modele getirir. 
+
+### [Ripgrep](https://github.com/BurntSushi/ripgrep) (Sistem Aracı)
+*   Yazici'ya dosya arama yeteneği vereceksen, bunu Python ile döngüye sokma. Sisteme `ripgrep` (rg) kur. Yapay zeka proje içinde bir kod arayacağı zaman arka planda `rg "aranan_kelime"` çalıştırıp saniyenin onda birinde sadece ilgili satırları çeksin.
+
+---
+
+## 3. Yapay Zekayı Çizgide Tutacak "Hafif" Ajan İskeletleri
+
+AG gibi sistemler kendi kendilerine konuşup sonsuz döngüye (loop) girer ve token bitirir. Bu döngüyü en katı ve hafif şekilde yöneten framework'ler:
+
+### [Microsoft AutoGen (Lite/Core)] veya [LangGraph]
+*   **Neden Dehşet?:** Modeli tek başına bırakırsan saçmalar. LangGraph ile ona katı bir akış diyagramı (State Machine) çizersin. 
+*   **Örnek Akış:** `Başla -> Dosyayı Ara -> Dosyayı Oku -> Kodu Yaz -> Çalıştır ve Test Et -> Dur.` Model bu akışın dışına çıkıp kendi kendine tarayıcıda YouTube açamaz. Gereksiz hiçbir adım atmadığı için token israfı sıfıra iner.
+
+---
+
+## 4. Dehşet-ül Vahşet Token Tasarrufu Sağlayan Mimari Hileler (Prompt Engineering)
+
+Kodlama altyapısını kurarken Yazici'nın sistem promptuna ve API ayarlarına şunları göm:
+
+*   **Gevezeliği Yasakla (No-Prose):** API çağrısı yaparken sistem talimatının başına şunu yaz: `"Asla açıklama yapma. Sohbet etme. Sorulan soruya veya göreve SADECE ham kod veya JSON formatında cevap ver. Her ekstra kelime için cezalandırılacaksın."` Bu hamle bile girdi-çıktı token maliyetini yarı yarıya düşürür.
+*   **JSON Mode / Structured Outputs:** Modelin kafasına göre metin üretmesini engelle. Gemini ve Claude'da bulunan `structured_output` özelliğini aç ve modelin sadece şu formatta konuşmasını zorunlu kıl:
+    ```json
+    {
+      "düşünce": "Kısa plan",
+      "araç_adı": "read_file",
+      "parametreler": {"path": "src/main.py"}
+    }
+    ```
+*   **Context Caching (Bağlam Önbellekleme):** Yazici çalışırken projenin değişmeyen ana dökümantasyonunu ve kütüphane bilgilerini API tarafında **Context Cache** olarak işaretle. Gemini 3 Flash, önbelleğe alınmış token'lar için normal fiyatın/kotanın çok daha küçük bir kısmını harcar.
+
+## Özet Paket
+
+Yazici'yı ayağa kaldırmak için AG'den kopya çekeceğin ideal kombinasyon:
+**Claude 3.5 Sonnet veya Gemini 3 Flash** + **Browser-Use** (Tarayıcı için) + **Aider tarzı Repo Map** (Dosya okuma için) + **Strict JSON Mode** (Gereksiz konuşmayı kesmek için). 
+
+Bu kurulumla AG'nin 1 saatAG’nin (Antigravity) o hantal, token canavarı mimarisini çöpe atıp, kendi sistemin **Yazici** için hem aşırı hafif hem de cebindeki token’ları sömürmeyecek **"dehşet-ül vahşet"** optimize açık kaynaklı araçları ve mimari hileleri listeliyorum. 
+
+Bunları bir araya getirdiğinde AG’den çok daha hızlı ve kota dostu bir canavar yaratırsın.
+
+---
+
+## 1. Tarayıcı ve Ekran Kontrolü İçin En Hafif Motorlar
+
+AG saniyede onlarca kez ekran resmi (Ağır Görsel Token) gönderdiği için batıyor. Biz bunun yerine metin tabanlı veya koordinat odaklı hafif araçlar kullanacağız.
+
+### [Browser-Use](https://github.com/browser-use/browser-use) (Python)
+*   **Neden Dehşet?:** Tarayıcıyı yapay zekaya teslim etmenin şu an dünyadaki en optimize yolu. Ekran görüntüsü göndermek yerine, sayfanın HTML/DOM yapısını inanılmaz derecede küçülterek (sadece tıklanabilir elemanları ayıklayarak) modele metin olarak gönderir. 
+*   **Token Tasarrufu:** %80! Görsel token harcamadığı için Gemini veya Claude ile çerez niyetine token harcayarak tarayıcıyı uçurur.
+
+### [OSWorld / Computer Use Olasılığı Yerine: PyAutoGUI + OS-World Lite]
+*   Eğer tarayıcı dışında direkt masaüstünü kontrol etsin istiyorsan, Anthropic’in ham demosunu kullanma (çok hantaldır). 
+*   **Çözüm:** Modelden sadece koordinat iste. Modele ekranın 800x600'lük çok küçük ve sıkıştırılmış bir halini gönder. Model sana `{"click": [450, 200]}` dönsün, sen arka planda bunu Python'un **PyAutoGUI** kütüphanesiyle tıkla. Sıfır kütüphane yükü, maksimum hız.
+
+---
+
+## 2. Dosya Okuma/Yazma ve Kod Tabanı (Context) Yönetimi
+
+Yazici'nın mevcut projedeki kodları okuyamaması sorununu çözmek ve bunu yaparken tüm projeyi modele yedirip token bitirmemek için şu ikiliyi entegre et:
+
+### [Aider](https://github.com/aider-chat/aider) Mimarisini Klonla (Repo Map)
+*   **Neden Dehşet?:** Aider, terminalde çalışan efsane bir yapay zeka kodlama asistanıdır. Sırrı şu: Modele tüm dosyaları asla göndermez. Projenin bir **"Giriş Haritasını" (Repository Map)** çıkarır. Modele sadece hangi dosyada hangi fonksiyonların ve sınıfların olduğunu (içeriği olmadan, sadece isimlerini) söyler.
+*   **Token Tasarrufu:** %90! Model haritaya bakar, *"Bana sadece `auth.py` içindeki `login` fonksiyonunun içeriği lazım"* der. Yazici gider sadece o 10 satırı okur modele getirir. 
+
+### [Ripgrep](https://github.com/BurntSushi/ripgrep) (Sistem Aracı)
+*   Yazici'ya dosya arama yeteneği vereceksen, bunu Python ile döngüye sokma. Sisteme `ripgrep` (rg) kur. Yapay zeka proje içinde bir kod arayacağı zaman arka planda `rg "aranan_kelime"` çalıştırıp saniyenin onda birinde sadece ilgili satırları çeksin.
+
+---
+
+## 3. Yapay Zekayı Çizgide Tutacak "Hafif" Ajan İskeletleri
+
+AG gibi sistemler kendi kendilerine konuşup sonsuz döngüye (loop) girer ve token bitirir. Bu döngüyü en katı ve hafif şekilde yöneten framework'ler:
+
+### [Microsoft AutoGen (Lite/Core)] veya [LangGraph]
+*   **Neden Dehşet?:** Modeli tek başına bırakırsan saçmalar. LangGraph ile ona katı bir akış diyagramı (State Machine) çizersin. 
+*   **Örnek Akış:** `Başla -> Dosyayı Ara -> Dosyayı Oku -> Kodu Yaz -> Çalıştır ve Test Et -> Dur.` Model bu akışın dışına çıkıp kendi kendine tarayıcıda YouTube açamaz. Gereksiz hiçbir adım atmadığı için token israfı sıfıra iner.
+
+---
+
+## 4. Dehşet-ül Vahşet Token Tasarrufu Sağlayan Mimari Hileler (Prompt Engineering)
+
+Kodlama altyapısını kurarken Yazici'nın sistem promptuna ve API ayarlarına şunları göm:
+
+*   **Gevezeliği Yasakla (No-Prose):** API çağrısı yaparken sistem talimatının başına şunu yaz: `"Asla açıklama yapma. Sohbet etme. Sorulan soruya veya göreve SADECE ham kod veya JSON formatında cevap ver. Her ekstra kelime için cezalandırılacaksın."` Bu hamle bile girdi-çıktı token maliyetini yarı yarıya düşürür.
+*   **JSON Mode / Structured Outputs:** Modelin kafasına göre metin üretmesini engelle. Gemini ve Claude'da bulunan `structured_output` özelliğini aç ve modelin sadece şu formatta konuşmasını zorunlu kıl:
+    ```json
+    {
+      "düşünce": "Kısa plan",
+      "araç_adı": "read_file",
+      "parametreler": {"path": "src/main.py"}
+    }
+    ```
+*   **Context Caching (Bağlam Önbellekleme):** Yazici çalışırken projenin değişmeyen ana dökümantasyonunu ve kütüphane bilgilerini API tarafında **Context Cache** olarak işaretle. Gemini 3 Flash, önbelleğe alınmış token'lar için normal fiyatın/kotanın çok daha küçük bir kısmını harcar.
+
+## Özet Paket
+
+Yazici'yı ayağa kaldırmak için AG'den kopya çekeceğin ideal kombinasyon:
+**Claude 3.5 Sonnet veya Gemini 3 Flash** + **Browser-Use** (Tarayıcı için) + **Aider tarzı Repo Map** (Dosya okuma için) + **Strict JSON Mode** (Gereksiz konuşmayı kesmek için). 
+
+Bu kurulumla AG'nin 1 saatte tükettiği tokenla sen 1 hafta boyunca durmadan otonom geliştirme yaparsın.

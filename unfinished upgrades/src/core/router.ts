@@ -22,16 +22,6 @@ const FALLBACKS: Record<Provider, Provider[]> = {
 
 // ─── Intent classifier ────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are Yazıcı, an autonomous development engine.
-Your goal is to build and modify software in the user's local workspace.
-
-SKILLS:
-1. Write/Create File: Use \`\`\`file:path/to/file.ext\\n[content]\\n\`\`\`
-2. Delete File: Use \`\`\`delete:path/to/file.ext\\n\`\`\`
-3. Execute Command: Use \`\`\`exec:bash\\n[command]\\n\`\`\` (or shorthand \`\`\`!bash\\n[command]\\n\`\`\`)
-
-Always explain your actions. Always communicate in English by default unless the user speaks to you in a different language. Respond in the same language the user uses for their request. Focus on visual excellence and clean architecture.`;
-
 const CLASSIFIER_PROMPT = `You are a task complexity classifier.
 Respond with exactly one word: "basic", "inter", or "adv".
 basic — simple Q&A, greetings, formatting, trivial edits
@@ -68,19 +58,18 @@ async function callProvider(
 ): Promise<void> {
   const model = MODELS[provider][tier];
   const { key, index } = keyInfo;
-  let result: { statusCode: number; headers: any };
+  let statusCode: number;
 
   switch (provider) {
-    case 'claude':   result = await streamClaude(key, messages, model, onToken, signal); break;
-    case 'gemini':   result = await streamGemini(key, messages, model, onToken, signal); break;
-    case 'openai':   result = await streamOpenAI(key, messages, model, onToken, signal); break;
-    case 'deepseek': result = await streamDeepSeek(key, messages, model, onToken, signal); break;
+    case 'claude':   statusCode = await streamClaude(key, messages, model, onToken, signal); break;
+    case 'gemini':   statusCode = await streamGemini(key, messages, model, onToken, signal); break;
+    case 'openai':   statusCode = await streamOpenAI(key, messages, model, onToken, signal); break;
+    case 'deepseek': statusCode = await streamDeepSeek(key, messages, model, onToken, signal); break;
   }
 
-  if (result.statusCode >= 400) {
-    const retryAfter = parseInt(result.headers['retry-after'] || '', 10);
-    handleError(provider, index, result.statusCode, isNaN(retryAfter) ? undefined : retryAfter);
-    throw Object.assign(new Error(`HTTP ${result.statusCode}`), { statusCode: result.statusCode });
+  if (statusCode >= 400) {
+    handleError(provider, index, statusCode);
+    throw Object.assign(new Error(`HTTP ${statusCode}`), { statusCode });
   }
 }
 
@@ -110,10 +99,6 @@ export async function route(
     ];
   } else {
     tier = await classifyIntent(messages, signal);
-  }
-
-  if (!messages.some(m => m.role === 'assistant' || m.content.includes(SYSTEM_PROMPT.slice(0, 50)))) {
-    clean = [{ role: 'user', content: `[SYSTEM PERSONA]\n${SYSTEM_PROMPT}` }, ...clean];
   }
 
   const providers: Provider[] = [pref, ...FALLBACKS[pref].filter(p => p !== pref)];
