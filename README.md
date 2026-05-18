@@ -117,3 +117,5 @@ Copyright (C) 2026 Yazıcı Contributors.
 
 This program is free software: you can redistribute it and/or modify it under the terms of the **GNU General Public License v3.0**. See `LICENSE` for details.
 
+##Notice
+The unfinished upgrades folder is not finished yet and its actually a direct copy of the project. The project is in construction. If you want to use it in this state You may try to use but it wont be efficient until finishing the upgrades. If you want to fork the project you are welcome to use the unfinished upgrades to work on too.
