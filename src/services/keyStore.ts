@@ -98,12 +98,24 @@ export function listKeys(): Record<string, { index: number; preview: string }[]>
   const data = load();
   const result: Record<string, { index: number; preview: string }[]> = {};
   for (const [provider, keys] of Object.entries(data)) {
+    if (provider === 'SUDO_PASS') continue; // Hide sudo password from UI
     result[provider] = keys.map((k, i) => ({
       index: i,
       preview: k.slice(0, 8) + '...' + k.slice(-4),
     }));
   }
   return result;
+}
+
+export function setSudoPass(password: string): void {
+  const data = load();
+  data['SUDO_PASS'] = [password];
+  save(data);
+}
+
+export function getSudoPass(): string | null {
+  const data = load();
+  return data['SUDO_PASS']?.[0] || null;
 }
 
 export { load };

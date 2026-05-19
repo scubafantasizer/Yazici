@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --accent: 250 89% 69%;
+    --accent2: 250 63% 56%;
+  }
+
+  body {
+    @apply bg-bg0 text-text font-sans antialiased h-screen overflow-hidden;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-bg3 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-border;
+}
